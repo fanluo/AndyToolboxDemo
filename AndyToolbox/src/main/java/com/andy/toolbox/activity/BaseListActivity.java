@@ -44,23 +44,50 @@ public abstract class BaseListActivity<T> extends BaseActivity {
 
     @Override
     protected void initView() {
+        super.initView();
         mDefaultEmptyView = new DefaultEmptyView(this);
         mDefaultErrorView = new DefaultErrorView(this);
+        mDefaultErrorView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                refresh();
+            }
+        });
+    }
+
+    /**
+     * 是否自动加载数据:默认true
+     *
+     * @return
+     */
+    protected boolean isAutoLoadData() {
+        return true;
     }
 
     @Override
     protected void initPageLogic() {
-        mAdapter = genAdapter();
-        mRecyclerView = genRecyclerView();
+        initRecyclerView();
+        initRefreshLayout();
+        if (isAutoLoadData()) {
+            refresh();
+        }
+    }
+
+    protected void initRecyclerView() {
+        mAdapter = getAdapter();
+        mRecyclerView = getRecyclerView();
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mAdapter);
-        RecyclerView.LayoutManager layoutManager = getDefaultLayoutManager();
+        RecyclerView.LayoutManager layoutManager = getLayoutManager();
         if (layoutManager == null) {
             mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         } else {
             mRecyclerView.setLayoutManager(layoutManager);
         }
-        mRefreshLayout = genSmartRefreshLayout();
+    }
+
+    protected void initRefreshLayout() {
+        mRefreshLayout = getSmartRefreshLayout();
         if (isSupportRefresh()) {
             mRefreshLayout.setEnableLoadMore(false);
             mRefreshLayout.setEnableAutoLoadMore(false);//这里需要先做加载更多屏蔽
@@ -68,25 +95,8 @@ public abstract class BaseListActivity<T> extends BaseActivity {
             mRefreshLayout.setEnableRefresh(true);
             mRefreshLayout.setOnRefreshListener(refreshlayout -> {
                 mRecyclerView.scrollToPosition(0);
-                requestData(true);
+                requestData(false);
             });
-        }
-        mDefaultErrorView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                refresh();
-            }
-        });
-        if (isAutoLoadData()) {
-            refresh();
-        }
-    }
-
-    private void refresh() {
-        if (isSupportRefresh()) {
-            mRefreshLayout.autoRefresh();
-        } else {
-            requestData(true);
         }
     }
 
@@ -99,71 +109,96 @@ public abstract class BaseListActivity<T> extends BaseActivity {
         return mRefreshLayout != null;
     }
 
-    protected RecyclerView.LayoutManager getDefaultLayoutManager() {
-        return null;
+    private void refresh() {
+        if (isSupportRefresh()) {
+            mRefreshLayout.autoRefresh();
+        } else {
+            requestData(true);
+        }
     }
 
-    protected abstract Observable<List<T>> getRequestObservable();
-
-    protected abstract BaseQuickAdapter<T, BaseViewHolder> genAdapter();
-
-    protected abstract RecyclerView genRecyclerView();
-
-    protected abstract SmartRefreshLayout genSmartRefreshLayout();
+    protected RecyclerView.LayoutManager getLayoutManager() {
+        return null;
+    }
 
     protected RecyclerView.ItemDecoration getItemDecoration() {
         return null;
     }
 
-    protected void requestData(boolean showToast) {
+    protected abstract Observable<List<T>> getRequestObservable();
+
+    protected abstract BaseQuickAdapter<T, BaseViewHolder> getAdapter();
+
+    protected abstract RecyclerView getRecyclerView();
+
+    protected abstract SmartRefreshLayout getSmartRefreshLayout();
+
+    protected void requestData(boolean showDialog) {
         if (getRequestObservable() == null) {
-            return;
+            mRefreshLayout.finishRefresh();
+            if (mCustomEmptyView != null) {
+                mAdapter.setEmptyView(mCustomEmptyView);
+            } else {
+                mAdapter.setEmptyView(mDefaultEmptyView);
+            }
+            onGetNextStart(null);
+        } else {
+            getRequestObservable()
+                    .compose(bindUntilEvent(ActivityEvent.DESTROY))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new BaseRxObservable<List<T>>(this, showDialog) {
+                        @Override
+                        public void onNext(List<T> tPageBean) {
+                            super.onNext(tPageBean);
+                            onGetNextStart(tPageBean);
+                            disposeData(tPageBean);
+                            onGetNextEnd(tPageBean);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            super.onError(e);
+                            onGetErrorStart(e);
+                            disposeError(e);
+                            onGetErrorEnd(e);
+                        }
+
+                        @Override
+                        public void onNetError() {
+                            super.onNetError();
+                            onGetNetErrorEnd();
+                        }
+                    });
         }
-        getRequestObservable()
-                .compose(bindUntilEvent(ActivityEvent.DESTROY))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new BaseRxObservable<List<T>>(this, showToast) {
-                    @Override
-                    public void onNext(List<T> resultList) {
-                        super.onNext(resultList);
-                        onGetNextStart(resultList);
-                        mAdapter.replaceData(resultList);
-                        if (isSupportRefresh()) {
-                            mRefreshLayout.finishRefresh();
-                        }
-                        if (mCustomEmptyView != null) {
-                            mAdapter.setEmptyView(mCustomEmptyView);
-                        } else {
-                            mAdapter.setEmptyView(mDefaultEmptyView);
-                        }
-                        if (getItemDecoration() != null && mRecyclerView.getItemDecorationCount() == 0) {
-                            mRecyclerView.addItemDecoration(getItemDecoration());
-                        }
-                        onGetNextEnd(resultList);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        super.onError(e);
-                        onGetErrorStart(e);
-                        if (isSupportRefresh()) {
-                            mRefreshLayout.finishRefresh();
-                        }
-                        if (mCustomNetErrorView != null) {
-                            mAdapter.setEmptyView(mCustomNetErrorView);
-                        } else {
-                            mAdapter.setEmptyView(mDefaultErrorView);
-                        }
-                        onGetErrorEnd(e);
-                    }
-                });
     }
 
-    protected void onGetNextStart(List<T> tPageBean) {
+    protected void disposeError(Throwable e) {
+        mRefreshLayout.finishRefresh();
+        if (mCustomNetErrorView != null) {
+            mAdapter.setEmptyView(mCustomNetErrorView);
+        } else {
+            mAdapter.setEmptyView(mDefaultErrorView);
+        }
+    }
+
+    protected void disposeData(List<T> list) {
+        mAdapter.replaceData(list);
+        mRefreshLayout.finishRefresh();
+        if (mCustomEmptyView != null) {
+            mAdapter.setEmptyView(mCustomEmptyView);
+        } else {
+            mAdapter.setEmptyView(mDefaultEmptyView);
+        }
+        if (getItemDecoration() != null && mRecyclerView.getItemDecorationCount() == 0) {
+            mRecyclerView.addItemDecoration(getItemDecoration());
+        }
+    }
+
+    protected void onGetNextStart(List<T> pageBean) {
 
     }
 
-    protected void onGetNextEnd(List<T> tPageBean) {
+    protected void onGetNextEnd(List<T> pageBean) {
 
     }
 
@@ -175,23 +210,18 @@ public abstract class BaseListActivity<T> extends BaseActivity {
 
     }
 
-    protected void resetApiParams(HashMap apiParams) {
+    protected void onGetNetErrorEnd() {
+
+    }
+
+    protected void resetApiParams(HashMap<String, String> apiParams) {
         mApiParams.clear();
         if (apiParams != null) {
             mApiParams.putAll(apiParams);
         }
     }
 
-    /**
-     * 是否自动加载数据:默认true
-     *
-     * @return
-     */
-    protected boolean isAutoLoadData() {
-        return true;
-    }
-
-    public HashMap<String, String> getRequestParams() {
+    public HashMap<String, String> getApiParams() {
         return mApiParams;
     }
 

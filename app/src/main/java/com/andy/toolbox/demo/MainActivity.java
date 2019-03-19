@@ -49,7 +49,7 @@ public class MainActivity extends BaseListActivity<String> {
     }
 
     @Override
-    protected BaseQuickAdapter<String, BaseViewHolder> genAdapter() {
+    protected BaseQuickAdapter<String, BaseViewHolder> getAdapter() {
         mItemAdapter = new ItemAdapter();
         mItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
@@ -67,12 +67,12 @@ public class MainActivity extends BaseListActivity<String> {
     }
 
     @Override
-    protected RecyclerView genRecyclerView() {
+    protected RecyclerView getRecyclerView() {
         return mRecyclerView;
     }
 
     @Override
-    protected SmartRefreshLayout genSmartRefreshLayout() {
+    protected SmartRefreshLayout getSmartRefreshLayout() {
         return mRefreshLayout;
     }
 
