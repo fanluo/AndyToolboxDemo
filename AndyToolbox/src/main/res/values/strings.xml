@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">AndyToolbox</string>
+    <string name="network_error">网络错误</string>
+    <string name="tip_empty_data">暂无数据</string>
+</resources>
