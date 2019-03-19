@@ -12,11 +12,18 @@ public class BaseRxObservable<T> implements Observer<T> {
 
     private boolean mShowToast;
 
+    private boolean mShowLoading;
+
     private Context mContext;
 
     public BaseRxObservable(Context context, boolean showToast) {
+        this(context, showToast, false);
+    }
+
+    public BaseRxObservable(Context context, boolean showToast, boolean showLoading) {
         mContext = context;
         mShowToast = showToast;
+        mShowLoading = showLoading;
     }
 
     @Override

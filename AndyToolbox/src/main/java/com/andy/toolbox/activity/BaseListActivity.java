@@ -1,10 +1,6 @@
 package com.andy.toolbox.activity;
 
-import androidx.recyclerview.widget.DefaultItemAnimator;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
-
 
 import com.andy.toolbox.rx.BaseRxObservable;
 import com.andy.toolbox.view.DefaultEmptyView;
@@ -18,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
@@ -43,8 +42,6 @@ public abstract class BaseListActivity<T> extends BaseActivity {
 
     private DefaultErrorView mDefaultErrorView;
 
-    private boolean needLazyRequest = true;//是否需要在懒加载的时候进行请求
-
     @Override
     protected void initView() {
         mDefaultEmptyView = new DefaultEmptyView(this);
@@ -55,32 +52,51 @@ public abstract class BaseListActivity<T> extends BaseActivity {
     protected void initPageLogic() {
         mAdapter = genAdapter();
         mRecyclerView = genRecyclerView();
-        mRefreshLayout = genSmartRefreshLayout();
-        mRefreshLayout.setEnableLoadMore(false);
-        mRefreshLayout.setEnableAutoLoadMore(false);//这里需要先做加载更多屏蔽
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.setAdapter(mAdapter);
         RecyclerView.LayoutManager layoutManager = getDefaultLayoutManager();
         if (layoutManager == null) {
             mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         } else {
             mRecyclerView.setLayoutManager(layoutManager);
         }
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mRecyclerView.setAdapter(mAdapter);
-        mRefreshLayout.setEnableLoadMore(false);
-        mRefreshLayout.setEnableRefresh(true);
-        mRefreshLayout.setOnRefreshListener(refreshlayout -> {
-            mRecyclerView.scrollToPosition(0);
-            requestData(true);
-        });
-        if (getLazyRequest()) {
-            mRefreshLayout.autoRefresh();
+        mRefreshLayout = genSmartRefreshLayout();
+        if (isSupportRefresh()) {
+            mRefreshLayout.setEnableLoadMore(false);
+            mRefreshLayout.setEnableAutoLoadMore(false);//这里需要先做加载更多屏蔽
+            mRefreshLayout.setEnableLoadMore(false);
+            mRefreshLayout.setEnableRefresh(true);
+            mRefreshLayout.setOnRefreshListener(refreshlayout -> {
+                mRecyclerView.scrollToPosition(0);
+                requestData(true);
+            });
         }
         mDefaultErrorView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRefreshLayout.autoRefresh();
+                refresh();
             }
         });
+        if (isAutoLoadData()) {
+            refresh();
+        }
+    }
+
+    private void refresh() {
+        if (isSupportRefresh()) {
+            mRefreshLayout.autoRefresh();
+        } else {
+            requestData(true);
+        }
+    }
+
+    /**
+     * 是否支持刷新
+     *
+     * @return
+     */
+    private boolean isSupportRefresh() {
+        return mRefreshLayout != null;
     }
 
     protected RecyclerView.LayoutManager getDefaultLayoutManager() {
@@ -112,7 +128,9 @@ public abstract class BaseListActivity<T> extends BaseActivity {
                         super.onNext(resultList);
                         onGetNextStart(resultList);
                         mAdapter.replaceData(resultList);
-                        mRefreshLayout.finishRefresh();
+                        if (isSupportRefresh()) {
+                            mRefreshLayout.finishRefresh();
+                        }
                         if (mCustomEmptyView != null) {
                             mAdapter.setEmptyView(mCustomEmptyView);
                         } else {
@@ -128,7 +146,9 @@ public abstract class BaseListActivity<T> extends BaseActivity {
                     public void onError(Throwable e) {
                         super.onError(e);
                         onGetErrorStart(e);
-                        mRefreshLayout.finishRefresh();
+                        if (isSupportRefresh()) {
+                            mRefreshLayout.finishRefresh();
+                        }
                         if (mCustomNetErrorView != null) {
                             mAdapter.setEmptyView(mCustomNetErrorView);
                         } else {
@@ -162,8 +182,13 @@ public abstract class BaseListActivity<T> extends BaseActivity {
         }
     }
 
-    protected boolean getLazyRequest() {
-        return needLazyRequest;
+    /**
+     * 是否自动加载数据:默认true
+     *
+     * @return
+     */
+    protected boolean isAutoLoadData() {
+        return true;
     }
 
     public HashMap<String, String> getRequestParams() {
