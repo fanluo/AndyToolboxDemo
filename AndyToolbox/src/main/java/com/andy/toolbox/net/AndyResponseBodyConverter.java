@@ -1,5 +1,7 @@
 package com.andy.toolbox.net;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 
@@ -39,6 +41,7 @@ public class AndyResponseBodyConverter<T> implements Converter<ResponseBody, T> 
 
     private T handleNetResult(String result) throws IOException {
         try {
+            Log.e("xxxxxxxxxxx", "xxxxxxxxxxresult=" + result);
             return adapter.read(gson.newJsonReader(new InputStreamReader(new ByteArrayInputStream(result.getBytes()))));
         } catch (Exception e) {
             throw new IOException("数据解析错误");

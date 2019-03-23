@@ -14,7 +14,7 @@ public class ApiEngine {
 
     public static boolean DEBUG = true;
 
-    private static final String BASE_URL = "http://www.baidu.com";
+    private static final String BASE_URL = "https://plantgw.nongbangzhu.cn";
 
     private static final ApiEngine ourInstance = new ApiEngine();
 

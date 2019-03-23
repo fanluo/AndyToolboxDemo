@@ -1,5 +1,6 @@
 package com.andy.toolbox.demo;
 
+import android.content.Intent;
 import android.view.View;
 import android.widget.Toast;
 
@@ -40,7 +41,7 @@ public class MainActivity extends BaseListActivity<String> {
     }
 
     @Override
-    protected void onGetNextEnd(List<String> tPageBean) {
+    protected void onGetNextStart(List<String> tPageBean) {
         List<String> list = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             list.add("item" + i);
@@ -54,6 +55,7 @@ public class MainActivity extends BaseListActivity<String> {
         mItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                toTestActivity();
                 Toast.makeText(MainActivity.this, "onItemClick", Toast.LENGTH_SHORT).show();
             }
         });
@@ -64,6 +66,11 @@ public class MainActivity extends BaseListActivity<String> {
             }
         });
         return mItemAdapter;
+    }
+
+    private void toTestActivity() {
+        Intent intent = new Intent(this, TestApiEngine.class);
+        startActivity(intent);
     }
 
     @Override
