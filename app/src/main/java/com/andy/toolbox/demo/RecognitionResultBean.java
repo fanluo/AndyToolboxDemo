@@ -2,12 +2,13 @@ package com.andy.toolbox.demo;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by luofan on 2019/3/20.
  */
-public class RecognitionResultBean {
+public class RecognitionResultBean implements Serializable {
 
     @SerializedName("Message")
     private String message;

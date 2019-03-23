@@ -12,13 +12,14 @@ import android.widget.TextView;
 import com.andy.toolbox.activity.BaseActivity;
 import com.andy.toolbox.demo.net.ApiTest;
 import com.andy.toolbox.net.ApiEngine;
+import com.andy.toolbox.rx.BaseRxObservable;
+import com.google.gson.Gson;
 import com.trello.rxlifecycle3.android.ActivityEvent;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 
@@ -37,7 +38,8 @@ public class TestApiEngine extends BaseActivity {
         mBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                makeRequest();
+//                makeRequest();
+                makeRequestString();
             }
         });
     }
@@ -79,10 +81,10 @@ public class TestApiEngine extends BaseActivity {
         Log.e("xxxxxxxxx", "xxxxxxxxxxxxximgBase64" + imgBase64);
         HashMap<String, String> hashMap = new HashMap<>();
         hashMap.put("img_base64", imgBase64);
-        ApiEngine.getInstance().create(ApiTest.class).recognizePlant(hashMap)
+        ApiEngine.getInstance().create(ApiTest.class).recognizePlantWithUrl(ApiTest.url_recognize_plant, hashMap)
                 .compose(this.bindUntilEvent(ActivityEvent.DESTROY))
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<RecognitionResultBean>() {
+                .subscribe(new BaseRxObservable<RecognitionResultBean>(TestApiEngine.this, true) {
                     @Override
                     public void onSubscribe(Disposable d) {
                         //为请求提供一个取消的手段
@@ -91,8 +93,44 @@ public class TestApiEngine extends BaseActivity {
                     @Override
                     public void onNext(RecognitionResultBean value) {
                         //请求成功
+                        Gson gson = new Gson();
+                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonNext=" + gson.toJson(value));
+                        mTvResult.setText(gson.toJson(value));
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        //请求出错
+                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonError=" + e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //请求完成
+                    }
+                });
+    }
+
+    private void makeRequestString() {
+        String imgBase64 = getBase64();
+        Log.e("xxxxxxxxx", "xxxxxxxxxxxxximgBase64" + imgBase64);
+        HashMap<String, String> hashMap = new HashMap<>();
+        hashMap.put("img_base64", imgBase64);
+        ApiEngine.getInstance().create(ApiTest.class).recognizePlantToString(ApiTest.url_recognize_plant, hashMap)
+                .compose(this.bindUntilEvent(ActivityEvent.DESTROY))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new BaseRxObservable<String>(TestApiEngine.this, true) {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        //为请求提供一个取消的手段
+                    }
+
+                    @Override
+                    public void onNext(String value) {
+                        //请求成功
+                        Gson gson = new Gson();
                         Log.e("xxxxxxxxxx", "xxxxxxxxxxonNext=" + value);
-                        mTvResult.setText(value.toString());
+                        mTvResult.setText(value);
                     }
 
                     @Override

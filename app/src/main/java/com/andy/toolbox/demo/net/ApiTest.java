@@ -26,8 +26,13 @@ public interface ApiTest {
 
     @Headers("Authorization:APPCODE dbb4c5c5111342af815bfb54e74ced4e")
     @FormUrlEncoded
-    @POST("/plant/recognize2")
-    Observable<String> recognizePlant(@Url String url, @FieldMap HashMap<String, String> apiParams);
+    @POST()
+    Observable<String> recognizePlantToString(@Url String url, @FieldMap HashMap<String, String> apiParams);
+
+    @Headers("Authorization:APPCODE dbb4c5c5111342af815bfb54e74ced4e")
+    @FormUrlEncoded
+    @POST()
+    Observable<RecognitionResultBean> recognizePlantWithUrl(@Url String url, @FieldMap HashMap<String, String> apiParams);
 
     @Headers("Authorization:APPCODE dbb4c5c5111342af815bfb54e74ced4e")
     @FormUrlEncoded
