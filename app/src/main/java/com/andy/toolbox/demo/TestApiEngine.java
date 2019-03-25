@@ -94,14 +94,12 @@ public class TestApiEngine extends BaseActivity {
                     public void onNext(RecognitionResultBean value) {
                         //请求成功
                         Gson gson = new Gson();
-                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonNext=" + gson.toJson(value));
                         mTvResult.setText(gson.toJson(value));
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         //请求出错
-                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonError=" + e.getMessage());
                     }
 
                     @Override
@@ -113,7 +111,6 @@ public class TestApiEngine extends BaseActivity {
 
     private void makeRequestString() {
         String imgBase64 = getBase64();
-        Log.e("xxxxxxxxx", "xxxxxxxxxxxxximgBase64" + imgBase64);
         HashMap<String, String> hashMap = new HashMap<>();
         hashMap.put("img_base64", imgBase64);
         ApiEngine.getInstance().create(ApiTest.class).recognizePlantToString(ApiTest.url_recognize_plant, hashMap)
@@ -128,15 +125,12 @@ public class TestApiEngine extends BaseActivity {
                     @Override
                     public void onNext(String value) {
                         //请求成功
-                        Gson gson = new Gson();
-                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonNext=" + value);
                         mTvResult.setText(value);
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         //请求出错
-                        Log.e("xxxxxxxxxx", "xxxxxxxxxxonError=" + e.getMessage());
                     }
 
                     @Override

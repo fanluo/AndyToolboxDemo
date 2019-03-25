@@ -1,5 +1,7 @@
 package com.andy.toolbox.net;
 
+import android.util.Log;
+
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.schedulers.Schedulers;
@@ -11,6 +13,8 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
  * Created by luofan on 2019/3/21.
  */
 public class ApiEngine {
+
+    private static final String TAG = "ApiEngine";
 
     public static boolean DEBUG = true;
 
@@ -45,8 +49,15 @@ public class ApiEngine {
         builder.readTimeout(15, TimeUnit.SECONDS);
         builder.connectTimeout(15, TimeUnit.SECONDS);
         if (DEBUG) {
+            HttpLoggingInterceptor.Logger logger = new HttpLoggingInterceptor.Logger() {
+                public void log(String message) {
+                    Log.e(TAG, message);
+                }
+            };
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger);
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             //设置拦截器
-            builder.addInterceptor(new LogInterceptor());
+            builder.addInterceptor(loggingInterceptor);
         }
         return builder.build();
     }
