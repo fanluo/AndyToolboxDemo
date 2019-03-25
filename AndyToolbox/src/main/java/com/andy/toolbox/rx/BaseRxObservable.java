@@ -21,6 +21,7 @@ public class BaseRxObservable<T> implements Observer<T> {
     }
 
     public BaseRxObservable(Context context, boolean showToast, boolean showLoading) {
+        //TODO 实现加载中接口
         mContext = context;
         mShowToast = showToast;
         mShowLoading = showLoading;
