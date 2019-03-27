@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 import com.andy.toolbox.activity.BaseActivity;
 import com.andy.toolbox.demo.net.ApiTest;
+import com.andy.toolbox.demo.net.FastApi;
 import com.andy.toolbox.net.ApiEngine;
-import com.andy.toolbox.net.FastApi;
 import com.andy.toolbox.rx.BaseRxObservable;
 import com.google.gson.Gson;
 import com.trello.rxlifecycle3.android.ActivityEvent;
@@ -114,7 +114,7 @@ public class TestApiEngine extends BaseActivity {
         String imgBase64 = getBase64();
         HashMap<String, String> hashMap = new HashMap<>();
         hashMap.put("img_base64", imgBase64);
-        ApiEngine.getInstance().create(FastApi.class).makePostRequest(ApiTest.url_recognize_plant, hashMap,String.class)
+        ApiEngine.getInstance().create(FastApi.class).makePostRequest(ApiTest.url_recognize_plant, hashMap)
                 .compose(this.bindUntilEvent(ActivityEvent.DESTROY))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new BaseRxObservable<String>(TestApiEngine.this, true) {

@@ -1,4 +1,4 @@
-package com.andy.toolbox.net;
+package com.andy.toolbox.demo.net;
 
 import java.util.HashMap;
 
@@ -15,6 +15,6 @@ public interface FastApi {
     //TODO 目前有问题，后续修改
     @FormUrlEncoded
     @POST()
-    <T> Observable<T> makePostRequest(@Url String url, @FieldMap HashMap<String, String> apiParams, Class<T> tClass);
+    Observable<String> makePostRequest(@Url String url, @FieldMap HashMap<String, String> apiParams);
 
 }
